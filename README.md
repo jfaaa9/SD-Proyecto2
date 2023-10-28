@@ -20,4 +20,15 @@ Proyecto de chat con sockets e hilos
     ClientHandler lee el mensaje, lo imprime, y envía una respuesta al cliente.
     El cliente recibe la respuesta y la imprime.
 
-- Compilacion: En la carpeta raiz, "javac src/server/SocketServer.java" y "javac src/component/SocketClient.java" 
+- Compilacion: En la carpeta raiz, "javac src/server/SocketServer.java" y "javac src/component/SocketClient.java"
+- Ejecucion: java src.server.SocketServer y src.component.SocketClient
+
+## ID: 2
+
+- Para simular cada conexion de un cliente, se puede iniciar una cli (cmd) propia para cada usuario y que compile el SocketClient
+
+- ChatManager: Por el momento solo agrega, elimina clientes y también permite enviar mensajes a todos los usuarios conectados en el canal principal. Se espera que esta clase maneje las salas de chat y la difusion de mensajes entre usuarios.
+
+- CAMBIOS:
+* ClientHandler: Usa metodos de ChatManager.
+* SocketClient: Se añade un while para asegurar que los usuarios puedan ver los mensajes de otros usuarios en tiempo real.

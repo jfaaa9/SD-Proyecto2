@@ -3,37 +3,61 @@ package src.server;
 import java.io.*;
 import java.net.*;
 
+// La clase ClientHandler implementa Runnable, lo que significa que puede ser ejecutada como un hilo.
 public class ClientHandler implements Runnable {
-    private Socket clientSocket;
 
+    // Atributos para la conexión del cliente y para enviar datos al cliente.
+    private Socket clientSocket;
+    private PrintWriter out;
+
+    // Constructor que acepta un objeto Socket, representando la conexión del cliente.
     public ClientHandler(Socket socket) {
         this.clientSocket = socket;
     }
 
+    // Método run que se ejecuta cuando el hilo se inicia.
     @Override
     public void run() {
         try {
+            // Inicializando el flujo de entrada para leer datos del cliente.
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
             
+            // Inicializando el flujo de salida para enviar datos al cliente.
+            out = new PrintWriter(clientSocket.getOutputStream(), true);
+
+            // Registrar el flujo de salida del cliente en ChatManager.
+            // Esto permite enviar mensajes a este cliente desde otras partes del programa.
+            ChatManager.addClient(out);
+
             String request;
+            // Mientras haya mensajes del cliente, léelos y procesa.
             while ((request = in.readLine()) != null) {
-                // Mostrar el ID del hilo junto con el mensaje recibido
-                System.out.println("Hilo ID: " + Thread.currentThread().getId() + " - Recibido: " + request);
+                System.out.println("Recibido: " + request);
                 
-                if ("salir".equalsIgnoreCase(request)) {
-                    out.println("Hilo ID: " + Thread.currentThread().getId() + " - Hasta luego!");
-                    break;
-                }
+                // Formatear el mensaje para incluir el ID del hilo que lo procesa.
+                String response = "Mensaje de [" + Thread.currentThread().getId() + "]: " + request;
                 
-                String response = "Hilo ID: " + Thread.currentThread().getId() + " - Mensaje recibido: " + request;
-                out.println(response);
+                // Usar ChatManager para enviar el mensaje a todos los clientes conectados.
+                ChatManager.broadcastMessage(response);
             }
 
-            clientSocket.close();
         } catch (IOException e) {
+            // Manejar excepciones relacionadas con la entrada/salida.
             e.printStackTrace();
+        } finally {
+            // Esta sección se ejecuta independientemente de si ocurrió una excepción o no.
+
+            // Eliminar el flujo de salida del cliente de ChatManager.
+            // Esto asegura que no intentamos enviar mensajes a un cliente desconectado.
+            ChatManager.removeClient(out);
+
+            // Intentar cerrar la conexión del cliente.
+            try {
+                clientSocket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
-
 }
+
