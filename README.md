@@ -23,6 +23,8 @@ Proyecto de chat con sockets e hilos
 - Compilacion: En la carpeta raiz, "javac src/server/SocketServer.java" y "javac src/component/SocketClient.java"
 - Ejecucion: java src.server.SocketServer y src.component.SocketClient
 
+--------------------------------------------------------------------------
+
 ## ID: 2
 
 - Para simular cada conexion de un cliente, se puede iniciar una cli (cmd) propia para cada usuario y que compile el SocketClient
@@ -32,3 +34,31 @@ Proyecto de chat con sockets e hilos
 - CAMBIOS:
 * ClientHandler: Usa metodos de ChatManager.
 * SocketClient: Se añade un while para asegurar que los usuarios puedan ver los mensajes de otros usuarios en tiempo real.
+
+--------------------------------------------------------------------------
+
+## ID: 3
+
+* Se Añade:
+- UserInterface: Interfaz grafica? javafX
+
+
+* Refactor
+- ChatManager: nueva clase interna ChatRoom, metodos para la clase ChatRoom crear sala, eliminar sala, nuevas funciones de mensajes, a un solo usuario, a todos menos 1, inicio de creacion de salas.
+
+- SocketClient: Ahora solo estan especificadas las funciones que realizan la conexion, para que sean conectadas a traves de la interfaz gráfica.
+
+- ClientHandler: Adaptacion para interfaz gráfica tambien, nuevo mensajes de parte del servidor
+
+- ChatManager, nuevas funciones de mensajes, a un solo usuario, a todos menos 1, inicio de creacion de salas.
+
+
+* Misceláneo
+- Para el chat global se pone msg antes del mensaje
+
+- Ahora los usuarios no ven sus propios mensajes llegar desde el servidor (Esto era en por cli)
+
+- Scripting (.cmd) para compilar las clases necesarias, tambien para ejecutar el servidor y los clientes y sus interfaces visuales
+
+
+

@@ -9,7 +9,8 @@ public class SocketServer {
     public static void main(String[] args) {
         System.out.println("Servidor iniciado...");
 
-        // Obtener la instancia del UserManager y agregar algunos usuarios
+        // Obtener la instancia del UserManager y agregar algunos usuarios 
+        //(ESTO NO DEBERIA ESTARE AQUI, SOCKET SERVER DEBE COMUNICARSE SOLO CON CLIENTE Y HANDLER)
         UserManager userManager = UserManager.getInstance();
         userManager.addUser("usr1", "pwd1");
         userManager.addUser("usr2", "pwd2");

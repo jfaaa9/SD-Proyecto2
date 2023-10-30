@@ -3,55 +3,73 @@ package src.server;
 import java.io.*;
 import java.net.*;
 
-// La clase ClientHandler implementa Runnable, lo que significa que puede ser ejecutada como un hilo.
+// Esta clase representa un manejador para cada cliente conectado al servidor.
 public class ClientHandler implements Runnable {
 
-    // Atributos para la conexión del cliente y para enviar datos al cliente.
+    // El socket que representa la conexión con el cliente.
     private Socket clientSocket;
+    // El flujo de salida para enviar mensajes al cliente.
     private PrintWriter out;
+    // La sala de chat actual a la que está unido el cliente. Por defecto, es el chat global.
+    private String currentRoom = "global"; 
 
-    // Constructor que acepta un objeto Socket, representando la conexión del cliente.
+    // Constructor que toma el socket del cliente como argumento.
     public ClientHandler(Socket socket) {
         this.clientSocket = socket;
     }
 
-    // Método run que se ejecuta cuando el hilo se inicia.
+    // Método que se ejecuta cuando se inicia el hilo del cliente.
     @Override
     public void run() {
         try {
-            // Inicializando el flujo de entrada para leer datos del cliente.
+            // Inicializa el flujo de entrada para leer mensajes del cliente.
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            
-            // Inicializando el flujo de salida para enviar datos al cliente.
+            // Inicializa el flujo de salida para enviar mensajes al cliente.
             out = new PrintWriter(clientSocket.getOutputStream(), true);
 
-            // Registrar el flujo de salida del cliente en ChatManager.
-            // Esto permite enviar mensajes a este cliente desde otras partes del programa.
-            ChatManager.addClient(out);
+            // Cuando un cliente se conecta, automáticamente se une al chat global.
+            ChatManager.ChatRoom.addClient(out);
+
+            // Enviar un mensaje de bienvenida al cliente e indica su ID.
+            ChatManager.ChatRoom.sendMessageToUser(("Bienvenido al chat! Conectado como " + "[" + Thread.currentThread().getId()) + "]", out);
 
             String request;
-            // Mientras haya mensajes del cliente, léelos y procesa.
+            // Escucha los mensajes entrantes del cliente.
             while ((request = in.readLine()) != null) {
                 System.out.println("Recibido: " + request);
-                
-                // Formatear el mensaje para incluir el ID del hilo que lo procesa.
-                String response = "Mensaje de [" + Thread.currentThread().getId() + "]: " + request;
-                
-                // Usar ChatManager para enviar el mensaje a todos los clientes conectados.
-                ChatManager.broadcastMessage(response);
-            }
 
+                // Si el cliente envía un mensaje que comienza con "JOIN", cambia su sala de chat actual.
+                if (request.startsWith("join ")) {
+                    currentRoom = request.split(" ")[1];
+                    out.println("Has unido a la sala: " + currentRoom);
+                } 
+                // Si el cliente envía un mensaje que comienza con "LEAVE", lo regresa al chat global.
+                else if (request.startsWith("leave")) {
+                    currentRoom = "global"; 
+                    out.println("Has dejado la sala. Ahora estas en el chat global.");
+                } 
+                // Si el cliente envía un mensaje que comienza con "MSG", envía ese mensaje a la sala actual.
+                else if (request.startsWith("msg ")) {
+                    String message = request.split(" ", 2)[1];
+                    String formattedMsg = "[" + currentRoom + "] Mensaje de [" + Thread.currentThread().getId() + "]: " + message;
+                    // Enviamos el mensaje a todos los clientes EXCEPTO al cliente actual.
+                    //ChatManager.ChatRoom.broadcastMessageExcept(formattedMsg, out);
+                    ChatManager.ChatRoom.broadcastMessage(formattedMsg);
+                } 
+                // Si el mensaje no sigue ningún formato reconocido, informa al cliente.
+                else {
+                    out.println("Servidor: Comando no reconocido.");
+                }
+            }
         } catch (IOException e) {
-            // Manejar excepciones relacionadas con la entrada/salida.
+            // Manejo de excepciones relacionadas con operaciones de I/O.
             e.printStackTrace();
         } finally {
-            // Esta sección se ejecuta independientemente de si ocurrió una excepción o no.
-
-            // Eliminar el flujo de salida del cliente de ChatManager.
-            // Esto asegura que no intentamos enviar mensajes a un cliente desconectado.
-            ChatManager.removeClient(out);
-
-            // Intentar cerrar la conexión del cliente.
+            // Bloque que se ejecuta después de salir del bucle, independientemente de si se produjo una excepción.
+            
+            // Quita al cliente de la sala de chat cuando deja el chat o se desconecta.
+            ChatManager.ChatRoom.removeClient(out);
+            // Intenta cerrar la conexión con el cliente.
             try {
                 clientSocket.close();
             } catch (IOException e) {
