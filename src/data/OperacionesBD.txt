@@ -1,0 +1,82 @@
+package src.data;
+
+import java.sql.*;
+
+public class OperacionesBD {
+
+    public void crearRegistro(String nombre, String email) {
+        Connection conexion = ConexionBD.conectar();
+
+        if (conexion != null) {
+            try {
+                String sql = "INSERT INTO tabla_ejemplo (nombre, email) VALUES (?, ?)";
+                PreparedStatement statement = conexion.prepareStatement(sql);
+                statement.setString(1, nombre);
+                statement.setString(2, email);
+                statement.executeUpdate();
+                System.out.println("Registro creado exitosamente.");
+            } catch (SQLException e) {
+                e.printStackTrace();
+            } finally {
+                ConexionBD.cerrarConexion(conexion);
+            }
+        }
+    }
+
+    public void leerRegistros() {
+        Connection conexion = ConexionBD.conectar();
+
+        if (conexion != null) {
+            try {
+                Statement statement = conexion.createStatement();
+                ResultSet resultado = statement.executeQuery("SELECT * FROM tabla_ejemplo");
+
+                while (resultado.next()) {
+                    System.out.println("Nombre: " + resultado.getString("nombre") + ", Email: " + resultado.getString("email"));
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            } finally {
+                ConexionBD.cerrarConexion(conexion);
+            }
+        }
+    }
+
+    public void actualizarRegistro(int id, String nuevoNombre, String nuevoEmail) {
+        Connection conexion = ConexionBD.conectar();
+
+        if (conexion != null) {
+            try {
+                String sql = "UPDATE tabla_ejemplo SET nombre = ?, email = ? WHERE id = ?";
+                PreparedStatement statement = conexion.prepareStatement(sql);
+                statement.setString(1, nuevoNombre);
+                statement.setString(2, nuevoEmail);
+                statement.setInt(3, id);
+                statement.executeUpdate();
+                System.out.println("Registro actualizado exitosamente.");
+            } catch (SQLException e) {
+                e.printStackTrace();
+            } finally {
+                ConexionBD.cerrarConexion(conexion);
+            }
+        }
+    }
+
+    public void borrarRegistro(int id) {
+        Connection conexion = ConexionBD.conectar();
+
+        if (conexion != null) {
+            try {
+                String sql = "DELETE FROM tabla_ejemplo WHERE id = ?";
+                PreparedStatement statement = conexion.prepareStatement(sql);
+                statement.setInt(1, id);
+                statement.executeUpdate();
+                System.out.println("Registro eliminado exitosamente.");
+            } catch (SQLException e) {
+                e.printStackTrace();
+            } finally {
+                ConexionBD.cerrarConexion(conexion);
+            }
+        }
+    }
+}

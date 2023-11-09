@@ -1,75 +1,135 @@
 package src.component;
 
+// Importaciones necesarias para la interfaz gráfica y el manejo de excepciones
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import java.io.IOException;
 
-
+// Clase UserInterface que extiende de Application, que es parte del framework de JavaFX para crear interfaces gráficas
 public class UserInterface extends Application {
-    
+
+    // Campos de la clase que incluyen la conexión con el servidor, áreas de texto para la interfaz y el escenario principal
     private SocketClient client;
     private TextArea chatArea;
-    private TextArea inputArea;
+    private TextField inputField;
+    private Stage primaryStage;
 
+    // Método principal que lanza la aplicación JavaFX
     public static void main(String[] args) {
         launch(args);
     }
 
+    // Método inicial que configura y muestra la pantalla de inicio
     @Override
-    public void start(Stage primaryStage) throws Exception {
-        
-        // Iniciar el cliente
-        client = new SocketClient() {
-            @Override
-            protected void startListening() {
-                Thread listeningThread = new Thread(() -> {
-                    try {
-                        String response;
-                        while ((response = in.readLine()) != null) {
-                            final String finalResponse = response; // Declaración de una nueva variable
-                            Platform.runLater(() -> {
-                                chatArea.appendText(finalResponse + "\n");
-                            });
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
-                listeningThread.start();
-            }
-        };
-        client.startClient();
-        
-        // Configuración inicial de JavaFX
-        setUpGUI(primaryStage);
+    public void start(Stage primaryStage) {
+        this.primaryStage = primaryStage;
+        showLoginScreen();
     }
 
-    private void setUpGUI(Stage primaryStage) {
-        primaryStage.setTitle("Usuario");
+    // Método para mostrar la pantalla de inicio de sesión
+    private void showLoginScreen() {
+        // Configuración del panel de inicio de sesión con texto y campos de contraseña
+        GridPane loginPane = new GridPane();
+        loginPane.setAlignment(Pos.CENTER);
+        loginPane.setPadding(new Insets(10));
+        loginPane.setHgap(8);
+        loginPane.setVgap(10);
+
+        // Campos para ingresar el usuario y contraseña
+        TextField usernameField = new TextField();
+        PasswordField passwordField = new PasswordField();
+
+        // Botón de inicio de sesión y su acción al hacer clic
+        Button loginButton = new Button("Iniciar sesión");
+        loginButton.setOnAction(e -> {
+            // Inicia el cliente si no está iniciado y se conecta al servidor
+            if (client == null || client.socket.isClosed()) {
+                try {
+                    client = new SocketClient();
+                    client.startClient();
+                    setUpChatClient();  // Configura el cliente para la escucha de mensajes
+                } catch (IOException ioException) {
+                    // En caso de error, muestra una alerta
+                    ioException.printStackTrace();
+                    showAlert("Error de conexión", "No se pudo conectar al servidor.");
+                    return;
+                }
+            }
+
+            // Envío de las credenciales del usuario al servidor
+            String username = usernameField.getText();
+            String password = passwordField.getText();
+            client.sendMessage("login " + username + " " + password);
+            
+            // Cambio a la escena del chat después de enviar las credenciales
+            changeToChatScene();
+        });
+
+        // Añade los componentes al panel y muestra la escena
+        loginPane.add(new Label("Usuario:"), 0, 0);
+        loginPane.add(usernameField, 1, 0);
+        loginPane.add(new Label("Contraseña:"), 0, 1);
+        loginPane.add(passwordField, 1, 1);
+        loginPane.add(loginButton, 1, 2);
+        GridPane.setMargin(loginButton, new Insets(20, 0, 0, 0));
+
+        Scene scene = new Scene(loginPane, 300, 200);
+        primaryStage.setTitle("Login");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+    // Método para cambiar a la escena de chat
+    private void changeToChatScene() {
+        setUpGUI();  // Configuración de la interfaz gráfica de usuario
+    }
+
+    // Método para configurar el cliente de chat
+    private void setUpChatClient() {
+        // Configura el listener de mensajes y comienza a escuchar mensajes del servidor
+        client.setMessageListener(message -> Platform.runLater(() -> chatArea.appendText(message + "\n")));
+        client.startListening();
+    }
+
+    // Método para configurar la interfaz gráfica de usuario del chat
+    private void setUpGUI() {
+        // Configuración de la ventana de chat y los campos para mostrar y enviar mensajes
+        primaryStage.setTitle("Chat");
+
         chatArea = new TextArea();
         chatArea.setEditable(false);
-        inputArea = new TextArea();
-        inputArea.setPromptText("Escribe tu mensaje aqui...");
-        inputArea.setPrefHeight(40);  // Define la altura a 40 pixels, pero puedes ajustarlo según tus necesidades
-        inputArea.setOnKeyPressed(event -> {
-            if (event.getCode() == KeyCode.ENTER) {
-                String message = inputArea.getText();
+
+        inputField = new TextField();
+        inputField.setPromptText("Escribe tu mensaje aquí...");
+        inputField.setOnAction(event -> {
+            String message = inputField.getText().trim();
+            if (!message.isEmpty()) {
                 client.sendMessage(message);
-                inputArea.clear();
-                event.consume();  // para evitar un salto de línea no deseado después de presionar Enter
+                inputField.clear();
             }
         });
 
-        VBox layout = new VBox(10);
-        layout.getChildren().addAll(chatArea, inputArea);
+        VBox layout = new VBox(10, chatArea, inputField);
+        layout.setPadding(new Insets(10));
 
-        Scene scene = new Scene(layout, 400, 300);
-        primaryStage.setScene(scene);
-        primaryStage.show();
+        Scene chatScene = new Scene(layout, 400, 300);
+        primaryStage.setScene(chatScene);
+    }
+
+    // Método para mostrar alertas
+    private void showAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }

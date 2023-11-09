@@ -1,30 +1,31 @@
 package src.server;
 
-import java.io.*;
-import java.net.*;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 public class SocketServer {
     private static final int PORT = 12345;
 
     public static void main(String[] args) {
         System.out.println("Servidor iniciado...");
+        startServer();
+    }
 
-        // Obtener la instancia del UserManager y agregar algunos usuarios 
-        //(ESTO NO DEBERIA ESTARE AQUI, SOCKET SERVER DEBE COMUNICARSE SOLO CON CLIENTE Y HANDLER)
-        UserManager userManager = UserManager.getInstance();
-        userManager.addUser("usr1", "pwd1");
-        userManager.addUser("usr2", "pwd2");
-
+    private static void startServer() {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             while (true) {
-                Socket clientSocket = serverSocket.accept();
-
-                // Crea un nuevo hilo para manejar la conexión del cliente
-                Thread clientThread = new Thread(new ClientHandler(clientSocket));
-                clientThread.start();
+                try {
+                    Socket clientSocket = serverSocket.accept();
+                    Thread clientThread = new Thread(new ClientHandler(clientSocket));
+                    clientThread.start();
+                } catch (IOException e) {
+                    System.err.println("Error al aceptar la conexión del cliente: " + e.getMessage());
+                }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("No se pudo iniciar el servidor en el puerto " + PORT + ": " + e.getMessage());
         }
     }
 }
+

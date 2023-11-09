@@ -1,0 +1,29 @@
+
+
+
+import javax.sql.DataSource;
+import org.postgresql.ds.PGSimpleDataSource;
+
+public class PoolConexionDB {
+    private static DataSource dataSource;
+
+    static {
+        PGSimpleDataSource ds = new PGSimpleDataSource();
+        ds.setServerName("localhost");
+        ds.setPortNumber(5432);
+        ds.setDatabaseName("SD_Proyecto2");
+        ds.setUser("postgres");
+        ds.setPassword("jonafalcon1");
+
+        // Puedes configurar aquí el tamaño del pool, tiempos de espera, etc.
+
+        dataSource = ds;
+    }
+
+    public static Connection conectar() throws SQLException {
+        return dataSource.getConnection();
+    }
+
+    // Resto del código...
+}
+

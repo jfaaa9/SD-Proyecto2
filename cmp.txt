@@ -1,0 +1,38 @@
+#!/bin/bash
+
+CLASS_NAME1="SocketClient"
+CLASS_NAME2="SocketServer"
+CLASS_NAME3="UserInterface"
+SRC_DIR1="src/component"
+SRC_DIR2="src/server"
+SRC_DIR3="src/component"
+
+BIN_DIR="bin"
+
+# Crear directorio BIN_DIR si no existe
+if [ ! -d "$BIN_DIR" ]; then
+  mkdir "$BIN_DIR"
+fi
+
+# Compilar SocketClient
+javac -d "$BIN_DIR" "$SRC_DIR1/$CLASS_NAME1.java"
+if [ $? -ne 0 ]; then
+  echo "La compilación de $CLASS_NAME1 falló."
+  exit 1
+fi
+
+# Compilar SocketServer
+javac -d "$BIN_DIR" "$SRC_DIR2/$CLASS_NAME2.java"
+if [ $? -ne 0 ]; then
+  echo "La compilación de $CLASS_NAME2 falló."
+  exit 1
+fi
+
+# Compilar UserInterface
+javac -d "$BIN_DIR" "$SRC_DIR3/$CLASS_NAME3.java"
+if [ $? -ne 0 ]; then
+  echo "La compilación de $CLASS_NAME3 falló."
+  exit 1
+fi
+
+echo "Compilación exitosa. Los archivos .class se encuentran en $BIN_DIR."

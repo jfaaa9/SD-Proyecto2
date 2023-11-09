@@ -60,5 +60,29 @@ Proyecto de chat con sockets e hilos
 
 - Scripting (.cmd) para compilar las clases necesarias, tambien para ejecutar el servidor y los clientes y sus interfaces visuales
 
+## ID: 4
 
+* Misceláneo
 
+- Scripting (.sh) , hay que dar permisos de ejecucion (chmod +x cmp.sh)
+
+* Se Añade:
+
+- InOut: Clase que proporcionará metodos de formato de entrada y salida de datos, para que la interfaz gráfica no tenga que preocuparse por eso, es decir será parte del servidor y una dependencia de clientHandler, no de SocketServer como se habia previsto en la arquitectura de componentes inicial.
+
+- Interfaz para el login 
+
+- Nueva capa data y conexiona  base de datos y crud básico.
+
+- UserDAO: Clase que se encarga de la comunicación con la base de datos, para obtener, crear, actualizar y eliminar usuarios.
+
+Para establecer la conexion a base de datos de usa jdbc (nativo de java), se agrego el driver de postgresql en la carpeta lib, para compilar se debe agregar al classpath el driver, compilar y ejecutar:
+
+```bash
+javac -cp "./lib/postgresql-42.6.0.jar" src/data/ConexionBD.java
+java -cp "./lib/postgresql-42.6.0.jar:" src.data.ConexionBD    
+```
+
+- Conexion lograda en bdd de pruebas (prueba99), solo guarda nombre y contraseña (se actualizara dependiendo del enunciado), se hicieron cambios en UserManager, para que ahora use la base de datos, tambien ClientHandler, se agrego el comando para el admin de añadir a base de datos con 'createuser', 
+
+SALE 2 VECES EL MENSAJE ConexionBD: "CONEXION EXITOSA CON LA BASE DE DATOS", SON 2 PORQUE CUANDO SE CREA UN USUARIO EN ClientHanlder SE LLAMA UN METODO handleCreateUser que llama createUser que hace 2 conexiones a bdd, una para ver si existe el usuario y otra para crearlo, al establecer una conexion ConexionBD avisa que se ha creado exitosamente,.
