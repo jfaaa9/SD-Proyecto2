@@ -17,6 +17,17 @@ public class SocketClient {
     protected BufferedReader in;
     private Consumer<String> messageListener;
 
+    // Método para leer un único mensaje del servidor
+    public String readMessage() {
+        try {
+            // Suponiendo que el servidor envía una línea de respuesta por cada mensaje enviado por el cliente
+            return in.readLine();
+        } catch (IOException e) {
+            System.out.println("Error reading message from server: " + e.getMessage());
+            return null; // o manejar de otra manera
+        }
+    }
+
     // Método para iniciar el cliente, que intenta abrir una conexión al servidor y establecer flujos de entrada/salida.
     public void startClient() throws IOException {
         socket = new Socket(SERVER_ADDRESS, SERVER_PORT);

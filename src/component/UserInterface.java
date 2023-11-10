@@ -50,6 +50,12 @@ public class UserInterface extends Application {
         // Botón de inicio de sesión y su acción al hacer clic
         Button loginButton = new Button("Iniciar sesión");
         loginButton.setOnAction(e -> {
+            String username = usernameField.getText();
+            String password = passwordField.getText();
+            handleLogin(username, password);
+        });
+        /*
+        loginButton.setOnAction(e -> {
             // Inicia el cliente si no está iniciado y se conecta al servidor
             if (client == null || client.socket.isClosed()) {
                 try {
@@ -72,7 +78,7 @@ public class UserInterface extends Application {
             // Cambio a la escena del chat después de enviar las credenciales
             changeToChatScene();
         });
-
+         */
         // Añade los componentes al panel y muestra la escena
         loginPane.add(new Label("Usuario:"), 0, 0);
         loginPane.add(usernameField, 1, 0);
@@ -132,4 +138,31 @@ public class UserInterface extends Application {
         alert.setContentText(message);
         alert.showAndWait();
     }
+
+    // Método para manejar el inicio de sesión
+    private void handleLogin(String username, String password) {
+        new Thread(() -> {
+            try {
+                if (client == null || client.socket.isClosed()) {
+                    client = new SocketClient();
+                    client.startClient();
+                }
+                client.sendMessage("login " + username + " " + password);
+                String serverResponse = client.readMessage();
+                if (serverResponse != null && serverResponse.equals("Login successful")) {
+                    Platform.runLater(() -> {
+                        setUpChatClient(); // Establece el listener de mensajes y comienza a escuchar
+                        changeToChatScene(); // Cambia a la escena del chat
+                        //chatArea.appendText("Bienvenido al chat, " + username + "!\n"); // Muestra mensaje de bienvenida
+                    });
+                }
+                 else {
+                    Platform.runLater(() -> showAlert("Login Failed", "Invalid username or password. Please try again."));
+                }
+            } catch (IOException e) {
+                Platform.runLater(() -> showAlert("Connection Error", "Could not connect to the server."));
+            }
+        }).start();
+    }
+
 }

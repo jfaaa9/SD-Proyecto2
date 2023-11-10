@@ -38,5 +38,18 @@ public class UserDAO {
         return null;
     }
 
-    // Puedes añadir más métodos aquí para actualizar o eliminar usuarios, si lo necesitas
+    public User getPasswordByUsername(String username) {
+        String sql = "SELECT Clave FROM Usuarios WHERE Nombre = ?";
+        try (Connection conn = ConexionBD.conectar();
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, username);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return new User(rs.getString("Nombre"), rs.getString("Clave"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }

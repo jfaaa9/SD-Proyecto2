@@ -53,9 +53,10 @@ public class UserManager {
         }
 
         public boolean checkPassword(String inputPassword) {
-            // Aquí deberías comparar el hash de la contraseña
-            return this.password.equals(inputPassword); // En la realidad, comparar el hash
+            // Simplemente compara la contraseña directa sin hashear
+            return this.password.equals(inputPassword);
         }
+        
     }
 }
 

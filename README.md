@@ -86,3 +86,29 @@ java -cp "./lib/postgresql-42.6.0.jar:" src.data.ConexionBD
 - Conexion lograda en bdd de pruebas (prueba99), solo guarda nombre y contraseña (se actualizara dependiendo del enunciado), se hicieron cambios en UserManager, para que ahora use la base de datos, tambien ClientHandler, se agrego el comando para el admin de añadir a base de datos con 'createuser', 
 
 SALE 2 VECES EL MENSAJE ConexionBD: "CONEXION EXITOSA CON LA BASE DE DATOS", SON 2 PORQUE CUANDO SE CREA UN USUARIO EN ClientHanlder SE LLAMA UN METODO handleCreateUser que llama createUser que hace 2 conexiones a bdd, una para ver si existe el usuario y otra para crearlo, al establecer una conexion ConexionBD avisa que se ha creado exitosamente,.
+
+
+## ID: 5
+
+IMPORTANTE, HASTA AHORA SIEMPRE QUE SE ESCRIBE EN EL LOGIN SE ESTAN GUARDANDO LOS USUARIOS,ESTO PORQUE EN UserManager AL CREAR UN OBJETO USUARIO AHI SE GUARDA AUTOMATICAMENTE, ESTO HAY QUE ELIMINARLO PARA LOGRAR UN LOGIN LIMPIO
+
+EN UserInterface al hacer login, del lado del servidor el ClientHandler recibe y en el starWith "login" usa handleLogin y este handle es una copia del handleCreateUser (que se copio para modificar), por eso al hacer login sale lo de crear. 
+
+El clientHandler se puede ver como codigo acoplado, pero es codigo que delega a funciones para que sea mas limpio y mas mantenible
+
+El Login funciona, correctamente verificando las credenciales en la base de datos
+
+Se agrego el nombre de usuario al iniciar sesion
+
+Falta 
+    - Cambiar a bdd final
+    - Crear admin
+    - Crear salas
+    - Agregar usuarios a salas
+    - Enviar mensajes a salas
+    - Reespaldo de chats
+
+    en fin, la logica de negocio falta,
+
+    y cosas como el texto enriquesido, estadisticas, como usuarios conectados, r
+    

@@ -17,6 +17,6 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-rm sources.txt
+#rm sources.txt
 
 echo "Compilación exitosa. Los archivos .class se encuentran en $BIN_DIR."
