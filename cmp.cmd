@@ -1,32 +1,20 @@
 @echo off
-
-set CLASS_NAME1=SocketClient
-set CLASS_NAME2=SocketServer
-set CLASS_NAME3=UserInterface
-set SRC_DIR1=src\component
-set SRC_DIR2=src\server
-set SRC_DIR3=src\component
-
+set CLASSPATH=.\lib\postgresql-42.6.0.jar;.\src
+set SRC_DIR=src
 set BIN_DIR=bin
 
+REM Crear directorio BIN_DIR si no existe
 if not exist "%BIN_DIR%" mkdir "%BIN_DIR%"
 
-javac -d "%BIN_DIR%" "%SRC_DIR1%\%CLASS_NAME1%.java"
+REM Compilar todo en src
+dir /b /s "%SRC_DIR%\*.java" > sources.txt
+javac -cp "%CLASSPATH%" -d "%BIN_DIR%" @sources.txt
 if %errorlevel% neq 0 (
-    echo La compilación de %CLASS_NAME1% falló.
-    exit /b %errorlevel%
+  echo La compilación falló.
+  exit /b 1
 )
 
-javac -d "%BIN_DIR%" "%SRC_DIR2%\%CLASS_NAME2%.java"
-if %errorlevel% neq 0 (
-    echo La compilación de %CLASS_NAME2% falló.
-    exit /b %errorlevel%
-)
+REM Descomentar la siguiente línea si desea eliminar sources.txt después de la compilación
+REM del sources.txt
 
-javac -d "%BIN_DIR%" "%SRC_DIR3%\%CLASS_NAME3%.java"
-if %errorlevel% neq 0 (
-    echo La compilación de %CLASS_NAME3% falló.
-    exit /b %errorlevel%
-)
-
-echo Compilacion exitosa. Los archivos .class se encuentran en %BIN_DIR%.
+echo Compilación exitosa. Los archivos .class se encuentran en %BIN_DIR%.

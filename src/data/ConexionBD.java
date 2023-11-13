@@ -9,7 +9,12 @@ public class ConexionBD {
     private static final String URL = "jdbc:postgresql://localhost:5432/prueba99";
     private static final String USER = "postgres";
     private static final String PASSWORD = "jonafalcon1";
-
+    /* 
+    private static final String URL = "jdbc:postgresql://localhost:5432/prueba99";
+    private static final String USER = "postgres";
+    private static final String PASSWORD = "jonafalcon1";
+    */
+    
     // Método para establecer la conexión
     public static Connection conectar() {
         Connection conexion = null;

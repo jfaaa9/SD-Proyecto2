@@ -1,14 +1,15 @@
 @echo off
-setlocal enabledelayedexpansion
 
-set "CLASS_PATH=.\bin"
+set CLASS_PATH=.\bin;.\lib\postgresql-42.6.0.jar
+set SERVER_CLASS=src.server.SocketServer
+set UI_CLASS=src.component.UserInterface
 
-set "SERVER_CLASS=src.server.SocketServer"
-set "CLIENT_CLASS=src.component.SocketClient"
-set "UI_CLASS=src.component.UserInterface"
+REM Iniciar Servidor
+start cmd /k "java -cp %CLASS_PATH% %SERVER_CLASS%"
+ping 127.0.0.1 -n 3 > nul
 
-start "Servidor" cmd /k "java -cp !CLASS_PATH! !SERVER_CLASS!"
-start "UI-CLI 1" cmd /k "java -cp !CLASS_PATH! !UI_CLASS!"
-start "UI-CLI 2" cmd /k "java -cp !CLASS_PATH! !UI_CLASS!"
-start "UI-CLI 3" cmd /k "java -cp !CLASS_PATH! !UI_CLASS!"
-
+REM Iniciar interfaces de usuario
+for /l %%i in (1,1,3) do (
+    start cmd /k "java -cp %CLASS_PATH% %UI_CLASS%"
+    ping 127.0.0.1 -n 2 > nul
+)
