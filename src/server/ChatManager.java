@@ -14,6 +14,8 @@ public class ChatManager {
 
     private static final String GLOBAL_CHAT_ROOM_NAME = "Chat Global"; // Nombre para la sala de chat global
     private static Map<String, ChatRoom> chatRooms = new ConcurrentHashMap<>();
+    private static Map<String, Set<PrintWriter>> roomClients = new ConcurrentHashMap<>();
+
 
     static {
         // Inicializar la sala de chat global al cargar la clase
@@ -32,7 +34,10 @@ public class ChatManager {
     public static void getAndShowMessagesByRoom(String roomName, PrintWriter targetUser) {
         MessageDAO messageDAO = new MessageDAO();
         List<Message> messages = messageDAO.getMessagesByRoom(roomName);
-
+    
+        // Invierte el orden de los mensajes
+        Collections.reverse(messages);
+    
         // Formatea y muestra los mensajes en la sala de chat
         for (Message message : messages) {
             String formattedMsg = message.formatForDisplay();
@@ -71,13 +76,32 @@ public class ChatManager {
             this.name = name;
         }
 
-        public static void addClient(PrintWriter writer, String username) {
+        public static void addClient(PrintWriter writer, String username, String roomName) {
             clientWriters.add(writer);
-            users.add(username); // Agrega el usuario a la sala
+            users.add(username);
+    
+            roomClients.computeIfAbsent(roomName, k -> Collections.synchronizedSet(new HashSet<>())).add(writer);
+        }
+    
+        public static void removeClient(PrintWriter writer, String roomName) {
+            clientWriters.remove(writer);
+    
+            Set<PrintWriter> roomWriters = roomClients.get(roomName);
+            if (roomWriters != null) {
+                roomWriters.remove(writer);
+            }
         }
 
-        public static void removeClient(PrintWriter writer) {
-            clientWriters.remove(writer);
+        // Nuevo método para enviar mensajes solo a una sala específica
+        public static void broadcastMessageInRoom(String message, String roomName) {
+            Set<PrintWriter> roomWriters = roomClients.get(roomName);
+            if (roomWriters != null) {
+                synchronized (roomWriters) {
+                    for (PrintWriter writer : roomWriters) {
+                        writer.println(message);
+                    }
+                }
+            }
         }
 
         public static void broadcastMessage(String message) {

@@ -50,7 +50,7 @@ public class ClientHandler implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            ChatManager.ChatRoom.removeClient(out);
+            ChatManager.ChatRoom.removeClient(out, currentRoom);
             try {
                 clientSocket.close();
             } catch (IOException e) {
@@ -70,7 +70,7 @@ public class ClientHandler implements Runnable {
             ChatManager.getAndShowMessagesByRoom(currentRoom, out);
     
             // Agrega al usuario a la sala
-            ChatManager.ChatRoom.addClient(out, username);
+            ChatManager.ChatRoom.addClient(out, username, currentRoom);
         } else {
             out.println("Uso correcto: join <nombre_sala>");
         }
@@ -85,7 +85,7 @@ public class ClientHandler implements Runnable {
                 this.username = username; // Guardar el nombre de usuario después de verificar las credenciales
                 out.println("Login successful");
                 // Agrega al usuario a la sala global
-                ChatManager.ChatRoom.addClient(out, username);
+                ChatManager.ChatRoom.addClient(out, username, currentRoom);
                 // Cambia el mensaje de bienvenida para usar el nombre de usuario
                 ChatManager.ChatRoom.sendMessageToUser((InOut.horaActual() + "  " + "Bienvenido al chat! Conectado como " + "[" + this.username + "]"), out);
                 // Método para obtener y mostrar los mensajes de la sala global
@@ -129,13 +129,9 @@ public class ClientHandler implements Runnable {
         if (request.startsWith("msg ")) {
             String content = request.substring("msg ".length());
             Message message = new Message(this.username, this.currentRoom, content, LocalDateTime.now());
-            // Llama a la función de ChatManager para manejar y guardar el mensaje
             ChatManager.handleAndSaveMessage(message);
-            String formattedMsg = message.formatForDisplay(); // Utiliza el método para formatear el mensaje
-            ChatManager.ChatRoom.broadcastMessage(formattedMsg);
-
-            // Aquí puedes también llamar al método para guardar el mensaje en la base de datos si lo necesitas
-            // Por ejemplo: messageDAO.insertMessage(message);
+            String formattedMsg = message.formatForDisplay();
+            ChatManager.ChatRoom.broadcastMessageInRoom(formattedMsg, currentRoom);
         }
     }
 }
