@@ -37,6 +37,8 @@ public class ClientHandler implements Runnable {
                 } else if (request.startsWith("leave")) {
                     currentRoom = "global"; 
                     out.println("Has dejado la sala. Ahora estás en el chat global.");
+                } else if (request.startsWith("bc ")) {
+                    handleMessageBroadcast(request);
                 } else if (request.startsWith("msg ")) {
                     handleMessage(request);
                 } else if (request.startsWith("login ")) {
@@ -100,6 +102,12 @@ public class ClientHandler implements Runnable {
     
 
     private void handleCreateUser(String request) {
+        // Verificar si el usuario actual es 'admin'
+        if (!"admin".equals(this.username)) {
+            out.println("Acceso denegado: solo 'admin' puede crear usuarios.");
+            return;
+        }
+    
         String[] parts = request.split(" ");
         if (parts.length == 3) {
             String username = parts[1];
@@ -123,8 +131,24 @@ public class ClientHandler implements Runnable {
             return false;
         }
     }
+    
+    // Método para manejar mensajes entrantes y difundir broadcast
+    private void handleMessageBroadcast(String request) {
+        if (!"admin".equals(this.username)) {
+            out.println("Acceso denegado: solo 'admin' puede enviar mensajes broadcast.");
+            return;
+        }
+        
+        if (request.startsWith("bc ")) {
+            String content = request.substring("bc ".length());
+            Message message = new Message(this.username, this.currentRoom, content, LocalDateTime.now());
+            ChatManager.handleAndSaveMessage(message);
+            String formattedMsg = message.formatForDisplay();
+            ChatManager.ChatRoom.broadcastMessageInRoom(formattedMsg, currentRoom);
+        }
+    }
 
-    // Método para manejar mensajes entrantes
+    // Método para manejar mensajes entrantes y difundir broadcast
     private void handleMessage(String request) {
         if (request.startsWith("msg ")) {
             String content = request.substring("msg ".length());
