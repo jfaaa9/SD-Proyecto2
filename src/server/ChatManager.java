@@ -1,7 +1,6 @@
 package src.server;
 
 import java.io.PrintWriter;
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -10,7 +9,6 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import src.data.MessageDAO;
-import src.server.UserManager.User;
 
 public class ChatManager {
 
@@ -31,14 +29,14 @@ public class ChatManager {
     }
 
     // Método para obtener y mostrar los mensajes de una sala de chat
-    public static void getAndShowMessagesByRoom(String roomName) {
+    public static void getAndShowMessagesByRoom(String roomName, PrintWriter targetUser) {
         MessageDAO messageDAO = new MessageDAO();
         List<Message> messages = messageDAO.getMessagesByRoom(roomName);
 
         // Formatea y muestra los mensajes en la sala de chat
         for (Message message : messages) {
             String formattedMsg = message.formatForDisplay();
-            ChatRoom.broadcastMessage(formattedMsg);
+            ChatRoom.sendMessageToUser(formattedMsg, targetUser);
         }
     }
 
@@ -67,13 +65,15 @@ public class ChatManager {
     public static class ChatRoom {
         private String name;
         private static Set<PrintWriter> clientWriters = Collections.synchronizedSet(new HashSet<>());
+        private static Set<String> users = new HashSet<>();
 
         private ChatRoom(String name) {
             this.name = name;
         }
 
-        public static void addClient(PrintWriter writer) {
+        public static void addClient(PrintWriter writer, String username) {
             clientWriters.add(writer);
+            users.add(username); // Agrega el usuario a la sala
         }
 
         public static void removeClient(PrintWriter writer) {

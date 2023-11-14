@@ -3,7 +3,6 @@ package src.server;
 import java.io.*;
 import java.net.*;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 //import src.server.UserManager.User;
 
@@ -25,7 +24,7 @@ public class ClientHandler implements Runnable {
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             out = new PrintWriter(clientSocket.getOutputStream(), true);
 
-            ChatManager.ChatRoom.addClient(out);
+            //ChatManager.ChatRoom.addClient(out);
 
             String request;
             while ((request = in.readLine()) != null) {
@@ -68,13 +67,15 @@ public class ClientHandler implements Runnable {
             out.println("Has unido a la sala: " + currentRoom);
     
             // Llama al método para obtener y mostrar los mensajes de la sala de chat
-            ChatManager.getAndShowMessagesByRoom(currentRoom);
+            ChatManager.getAndShowMessagesByRoom(currentRoom, out);
+    
+            // Agrega al usuario a la sala
+            ChatManager.ChatRoom.addClient(out, username);
         } else {
             out.println("Uso correcto: join <nombre_sala>");
         }
     }
     
-
     private void handleLogin(String request){
         String[] parts = request.split(" ");
         if (parts.length == 3) {
@@ -83,10 +84,12 @@ public class ClientHandler implements Runnable {
             if (userManager.verifyCredentials(username, password)) {
                 this.username = username; // Guardar el nombre de usuario después de verificar las credenciales
                 out.println("Login successful");
+                // Agrega al usuario a la sala global
+                ChatManager.ChatRoom.addClient(out, username);
                 // Cambia el mensaje de bienvenida para usar el nombre de usuario
                 ChatManager.ChatRoom.sendMessageToUser((InOut.horaActual() + "  " + "Bienvenido al chat! Conectado como " + "[" + this.username + "]"), out);
                 // Método para obtener y mostrar los mensajes de la sala global
-                ChatManager.getAndShowMessagesByRoom("global"); 
+                ChatManager.getAndShowMessagesByRoom("global", out); 
             } else {
                 out.println("Login failed");
             }
@@ -94,6 +97,7 @@ public class ClientHandler implements Runnable {
             out.println("Login failed");
         }
     }
+    
 
     private void handleCreateUser(String request) {
         String[] parts = request.split(" ");
