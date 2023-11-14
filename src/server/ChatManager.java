@@ -1,11 +1,16 @@
 package src.server;
 
 import java.io.PrintWriter;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+
+import src.data.MessageDAO;
+import src.server.UserManager.User;
 
 public class ChatManager {
 
@@ -15,6 +20,26 @@ public class ChatManager {
     static {
         // Inicializar la sala de chat global al cargar la clase
         chatRooms.put(GLOBAL_CHAT_ROOM_NAME, new ChatRoom(GLOBAL_CHAT_ROOM_NAME));
+    }
+
+    // Método para manejar y guardar un mensaje
+    public static void handleAndSaveMessage(Message message) {
+        // Llama a ChatRoom para difundir el mensaje
+        MessageDAO messageDAO = new MessageDAO();
+        // Llama a MessageDAO para guardar el mensaje en la base de datos
+        messageDAO.insertMessage(message);
+    }
+
+    // Método para obtener y mostrar los mensajes de una sala de chat
+    public static void getAndShowMessagesByRoom(String roomName) {
+        MessageDAO messageDAO = new MessageDAO();
+        List<Message> messages = messageDAO.getMessagesByRoom(roomName);
+
+        // Formatea y muestra los mensajes en la sala de chat
+        for (Message message : messages) {
+            String formattedMsg = message.formatForDisplay();
+            ChatRoom.broadcastMessage(formattedMsg);
+        }
     }
 
     // Método para crear y agregar una nueva sala de chat. Si la sala ya existe, devuelve esa.
@@ -81,6 +106,7 @@ public class ChatManager {
                 }
             }
         }
+
     }
 }
 

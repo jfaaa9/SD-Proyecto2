@@ -2,8 +2,10 @@ package src.server;
 
 import java.io.*;
 import java.net.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
-import src.server.UserManager.User;
+//import src.server.UserManager.User;
 
 public class ClientHandler implements Runnable {
 
@@ -32,23 +34,16 @@ public class ClientHandler implements Runnable {
                 if (request.startsWith("createuser ")) {
                     handleCreateUser(request);
                 } else if (request.startsWith("join ")) {
-                    currentRoom = request.split(" ")[1];
-                    out.println("Has unido a la sala: " + currentRoom);
+                    handleJoin(request);
                 } else if (request.startsWith("leave")) {
                     currentRoom = "global"; 
                     out.println("Has dejado la sala. Ahora estás en el chat global.");
                 } else if (request.startsWith("msg ")) {
-                    String message = request.split(" ", 2)[1];
-                    // NO ES CORRECTO MANEJAR MENSAJES ACA, LA TARERA DE ESTOS IF'S ES REDIRECCIONAR
-                    //String formattedMsg = InOut.horaActual() + "  " + "[" + currentRoom + "] Mensaje de [" + Thread.currentThread().getId() + "]: " + message;
-                    String formattedMsg = InOut.horaActual() + "  " + "[" + currentRoom + "] Mensaje de [" + this.username + "]: " + message;
-                    ChatManager.ChatRoom.broadcastMessage(formattedMsg);
+                    handleMessage(request);
                 } else if (request.startsWith("login ")) {
-                    // Aquí deberías verificar las credenciales del usuario.
+                    // Aquí verificar las credenciales del usuario.
                     handleLogin(request);
-                    // Por ahora, solo imprime un mensaje de bienvenida.
-                    //ChatManager.ChatRoom.sendMessageToUser((InOut.horaActual() + "  " + "Bienvenido al chat! Conectado como " + "[" + Thread.currentThread().getId()) + "]", out);
-                    //ChatManager.ChatRoom.sendMessageToUser((InOut.horaActual() + "  " + "Bienvenido al chat! Conectado como " + "[" + this.username) + "]", out);
+
                 } else {
                     out.println("Servidor: Comando no reconocido.");
                 }
@@ -65,6 +60,21 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    private void handleJoin(String request) {
+        String[] parts = request.split(" ");
+        if (parts.length == 2) {
+            String roomName = parts[1];
+            currentRoom = roomName;
+            out.println("Has unido a la sala: " + currentRoom);
+    
+            // Llama al método para obtener y mostrar los mensajes de la sala de chat
+            ChatManager.getAndShowMessagesByRoom(currentRoom);
+        } else {
+            out.println("Uso correcto: join <nombre_sala>");
+        }
+    }
+    
+
     private void handleLogin(String request){
         String[] parts = request.split(" ");
         if (parts.length == 3) {
@@ -75,6 +85,8 @@ public class ClientHandler implements Runnable {
                 out.println("Login successful");
                 // Cambia el mensaje de bienvenida para usar el nombre de usuario
                 ChatManager.ChatRoom.sendMessageToUser((InOut.horaActual() + "  " + "Bienvenido al chat! Conectado como " + "[" + this.username + "]"), out);
+                // Método para obtener y mostrar los mensajes de la sala global
+                ChatManager.getAndShowMessagesByRoom("global"); 
             } else {
                 out.println("Login failed");
             }
@@ -105,6 +117,21 @@ public class ClientHandler implements Runnable {
         } else {
             out.println("Usuario ya registrado");
             return false;
+        }
+    }
+
+    // Método para manejar mensajes entrantes
+    private void handleMessage(String request) {
+        if (request.startsWith("msg ")) {
+            String content = request.substring("msg ".length());
+            Message message = new Message(this.username, this.currentRoom, content, LocalDateTime.now());
+            // Llama a la función de ChatManager para manejar y guardar el mensaje
+            ChatManager.handleAndSaveMessage(message);
+            String formattedMsg = message.formatForDisplay(); // Utiliza el método para formatear el mensaje
+            ChatManager.ChatRoom.broadcastMessage(formattedMsg);
+
+            // Aquí puedes también llamar al método para guardar el mensaje en la base de datos si lo necesitas
+            // Por ejemplo: messageDAO.insertMessage(message);
         }
     }
 }
