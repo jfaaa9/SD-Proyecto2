@@ -3,8 +3,7 @@ package src.server;
 import java.io.*;
 import java.net.*;
 import java.time.LocalDateTime;
-
-//import src.server.UserManager.User;
+import src.server.ChatManager.ChatRoom;
 
 public class ClientHandler implements Runnable {
 
@@ -24,8 +23,6 @@ public class ClientHandler implements Runnable {
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             out = new PrintWriter(clientSocket.getOutputStream(), true);
 
-            //ChatManager.ChatRoom.addClient(out);
-
             String request;
             while ((request = in.readLine()) != null) {
                 System.out.println(InOut.horaActual() + " " + "Recibido: " + request);
@@ -39,10 +36,16 @@ public class ClientHandler implements Runnable {
                     out.println("Has dejado la sala. Ahora estás en el chat global.");
                 } else if (request.startsWith("msg ")) {
                     handleMessage(request);
+                } else if (request.startsWith("bc ")) {
+                    // Cambio: Obtiene la sala actual y llama a broadcastMessage
+                    ChatRoom room = ChatManager.getRoom(currentRoom);
+                    if (room != null) {
+                        room.broadcastMessage(request);
+                    } else {
+                        out.println("Error: Sala de chat no encontrada.");
+                    }
                 } else if (request.startsWith("login ")) {
-                    // Aquí verificar las credenciales del usuario.
                     handleLogin(request);
-
                 } else {
                     out.println("Servidor: Comando no reconocido.");
                 }
@@ -50,7 +53,11 @@ public class ClientHandler implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            ChatManager.ChatRoom.removeClient(out);
+            // Cambio: Obtiene la sala actual y llama a removeClient
+            ChatRoom room = ChatManager.getRoom(currentRoom);
+            if (room != null) {
+                room.removeClient(out);
+            }
             try {
                 clientSocket.close();
             } catch (IOException e) {
@@ -65,31 +72,37 @@ public class ClientHandler implements Runnable {
             String roomName = parts[1];
             currentRoom = roomName;
             out.println("Has unido a la sala: " + currentRoom);
-    
-            // Llama al método para obtener y mostrar los mensajes de la sala de chat
+
             ChatManager.getAndShowMessagesByRoom(currentRoom, out);
-    
-            // Agrega al usuario a la sala
-            ChatManager.ChatRoom.addClient(out, username);
+
+            ChatRoom room = ChatManager.getRoom(currentRoom);
+            if (room != null) {
+                room.addClient(out, username);
+            } else {
+                out.println("Error: No se pudo unir a la sala.");
+            }
         } else {
             out.println("Uso correcto: join <nombre_sala>");
         }
     }
     
-    private void handleLogin(String request){
+    private void handleLogin(String request) {
         String[] parts = request.split(" ");
         if (parts.length == 3) {
             String username = parts[1];
             String password = parts[2];
             if (userManager.verifyCredentials(username, password)) {
-                this.username = username; // Guardar el nombre de usuario después de verificar las credenciales
+                this.username = username;
                 out.println("Login successful");
-                // Agrega al usuario a la sala global
-                ChatManager.ChatRoom.addClient(out, username);
-                // Cambia el mensaje de bienvenida para usar el nombre de usuario
-                ChatManager.ChatRoom.sendMessageToUser((InOut.horaActual() + "  " + "Bienvenido al chat! Conectado como " + "[" + this.username + "]"), out);
-                // Método para obtener y mostrar los mensajes de la sala global
-                ChatManager.getAndShowMessagesByRoom("global", out); 
+
+                ChatRoom globalRoom = ChatManager.getGlobalRoom();
+                if (globalRoom != null) {
+                    globalRoom.addClient(out, username);
+                } else {
+                    out.println("Error: No se pudo conectar a la sala global.");
+                }
+
+                ChatManager.getAndShowMessagesByRoom("global", out);
             } else {
                 out.println("Login failed");
             }
@@ -97,7 +110,6 @@ public class ClientHandler implements Runnable {
             out.println("Login failed");
         }
     }
-    
 
     private void handleCreateUser(String request) {
         String[] parts = request.split(" ");
@@ -124,18 +136,23 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    // Método para manejar mensajes entrantes
     private void handleMessage(String request) {
         if (request.startsWith("msg ")) {
             String content = request.substring("msg ".length());
             Message message = new Message(this.username, this.currentRoom, content, LocalDateTime.now());
-            // Llama a la función de ChatManager para manejar y guardar el mensaje
-            ChatManager.handleAndSaveMessage(message);
-            String formattedMsg = message.formatForDisplay(); // Utiliza el método para formatear el mensaje
-            ChatManager.ChatRoom.broadcastMessage(formattedMsg);
 
-            // Aquí puedes también llamar al método para guardar el mensaje en la base de datos si lo necesitas
-            // Por ejemplo: messageDAO.insertMessage(message);
+            ChatManager.handleAndSaveMessage(message);
+
+            String formattedMsg = message.formatForDisplay(); 
+
+            ChatRoom room = ChatManager.getRoom(this.currentRoom);
+            if (room != null) {
+                room.sendMessageToRoomClients(formattedMsg, out);
+            } else {
+                out.println("Error: Sala de chat no encontrada.");
+            }
+
+            out.println(formattedMsg);
         }
     }
 }
